@@ -9,15 +9,9 @@
 #include <random>
 #include <fstream>
 
-using namespace std::chrono;
-
-typedef time_point<steady_clock, duration<unsigned int, std::nano>> SteadyClockTimePoint;
-
-
 int main()
-{   
-
-
+{
+    //test setup
     Vector<int> intVector;
     std::vector<int> intStandardVector;
 
@@ -35,146 +29,229 @@ int main()
     std::default_random_engine engine;
     
     //creating array with 10000 random integers.
-    int randomArray[9999];
-    for(unsigned long long i = 0; i < 10000; i++)
+    const unsigned int arrLength = 10000;
+    int randomArray[arrLength];
+    for(unsigned long long i = 0; i < arrLength; i++)
         randomArray[i] = engine();
 
-    //creating array with words from file.
-    std::string wordArray[12197];
+    //creating vector with words from file.
+    std::vector<std::string> wordVector;
     std::ifstream wordFile;
-    wordFile.open("../Data/Lab4_TestFile");
-    int wordArrIndex = 0;
+    wordFile.open("../Data/Lab4_TestFile"); //../Data
     std::string word;
     while(wordFile.good())
     {
-        getline(wordFile, wordArray[wordArrIndex], '\n');
-        //std::cout << wordArray[wordArrIndex] << std::endl;
-        ++wordArrIndex;
+        getline(wordFile, word);
+        wordVector.push_back(word);
     }
-
-
 
     //test vector int
-    std::cout << "-----------------Integer vector test begins.-----------------" << std::endl;
-
-    SteadyClockTimePoint totalPushbackVec;
-    SteadyClockTimePoint totalPushfrontVec;
-    SteadyClockTimePoint totalPushbackStdVec;
-    SteadyClockTimePoint totalPushfrontStdVec;
-    SteadyClockTimePoint start;
-    SteadyClockTimePoint end;
+    std::cout << "--------------------------------Integer vector test begins.--------------------------------" << std::endl;
     
-    for(unsigned long long i = 0; i < 10000; i = i + 2)
+    std::chrono::duration<unsigned int, std::nano> total;
+    std::chrono::time_point<std::chrono::steady_clock> start;
+    std::chrono::time_point<std::chrono::steady_clock> end;
+
+    //pushback
+    for(unsigned long long i = 0; i < arrLength; i++)
     {
-        start = steady_clock::now();
+        start = std::chrono::steady_clock::now();
         intVector.PushBack(randomArray[i]);
-        end = steady_clock::now();
-        totalPushbackVec += (end - start);
-        start = steady_clock::now();
-        intVector.PushFront(randomArray[i+1]);
-        end = steady_clock::now();
-        totalPushfrontVec += (end - start);
+        end = std::chrono::steady_clock::now();
+        total += (end - start); 
+    }
+    //std::cout << "Your vector PushBack() test time:                                        " << std::chrono::duration_cast<std::chrono::microseconds>(total).count() << " microseconds." << std::endl;
+    //total = end - end; //reset //gemensam tid
+
+    //pushfront
+    for (unsigned long long i = arrLength/2; i < arrLength; i++)
+    {
+        start = std::chrono::steady_clock::now();
+        intVector.PushFront(randomArray[i]);
+        end = std::chrono::steady_clock::now();
+        total += (end - start);
     }
 
+    std::cout << "Your vector PushBack() and PushFront() test time:                        " << std::chrono::duration_cast<std::chrono::microseconds>(total).count() << " microseconds." << std::endl;
+    total = end - end;
     
-    for(unsigned long long i = 0; i < 10000; i = i + 2)
+    for(unsigned long long i = 0; i < arrLength/2; i++)
     {
-        start = steady_clock::now();
+        start = std::chrono::steady_clock::now();
         intStandardVector.push_back(randomArray[i]);
-        end = steady_clock::now();
-        totalPushbackStdVec += (end - start);
-        start = steady_clock::now();
-        intStandardVector.insert(intStandardVector.begin(), randomArray[i+1]);
-        end = steady_clock::now();
-        totalPushfrontStdVec += (end - start);
+        end = std::chrono::steady_clock::now();
+        total += (end - start);
     }
+    //std::cout << "Standard vector PushBack() test time:                                    " << std::chrono::duration_cast<std::chrono::microseconds>(total).count() << " microseconds." << std::endl;
+    //total = end - end;
+
+    for(unsigned long long i = arrLength/2; i < arrLength; i++)
+    {
+        start = std::chrono::steady_clock::now();
+        intStandardVector.insert(intStandardVector.begin(), randomArray[i]);
+        end = std::chrono::steady_clock::now();
+        total += (end - start);
+    }
+    std::cout << "Standard vector PushBack() and PushFront() test time:                    " << std::chrono::duration_cast<std::chrono::microseconds>(total).count() << " microseconds." << std::endl;
+    total = end - end;
 
     //adding every element into one element
-    unsigned long long sumElements;
-    for(unsigned long long i = 0; i < 10000; i++)
+    unsigned long long sumElements = 0;
+    start = std::chrono::steady_clock::now(); //hela operationens exekveringstid mäts
+    for(unsigned long long i = 0; i < arrLength; i++)
+    {
         sumElements += intVector[i];
-    intVector.PushBack(sumElements);
-
-    //std::cout << sumElements << std::endl;
+    }
+    end = std::chrono::steady_clock::now();
+    total = (end - start);
+    std::cout << "Your vector adding every element into one element test time:             " << std::chrono::duration_cast<std::chrono::microseconds>(total).count() << " microseconds." << std::endl;
+    total = end - end;
 
     sumElements = 0;
-    for(unsigned long long i = 0; i < 10000; i++)
+    start = std::chrono::steady_clock::now();
+    for(unsigned long long i = 0; i < arrLength; i++)
+    {
         sumElements += intStandardVector[i];
-    intStandardVector.push_back(sumElements);
-    //std::cout << sumElements << std::endl;
+    }
+    end = std::chrono::steady_clock::now();
+    total = (end - start);
+    std::cout << "Standard vector adding every element into one element test time:         " << std::chrono::duration_cast<std::chrono::microseconds>(total).count() << " microseconds." << std::endl;
+    total = end - end;
 
     //adding every 100 element into one element
     sumElements = 0;
-    for(unsigned long long i = 0; i < 10000; i = i+100)
+    start = std::chrono::steady_clock::now();
+    for(unsigned long long i = 0; i < arrLength; i = i+100)
+    {
         sumElements += intVector[i];
-    intVector.PushBack(sumElements);
-
-    //std::cout << sumElements << std::endl;
+    }
+    end = std::chrono::steady_clock::now();
+    total = (end - start);
+    std::cout << "Your vector adding every hundred element into one element test time:     " << std::chrono::duration_cast<std::chrono::nanoseconds>(total).count() << " nanoseconds." << std::endl;
+    total = end - end;
 
     sumElements = 0;
-    for(unsigned long long i = 0; i < 10000; i = i+100)
+    start = std::chrono::steady_clock::now();
+    for(unsigned long long i = 0; i < arrLength; i = i+100)
+    {
         sumElements += intStandardVector[i];
-    intStandardVector.push_back(sumElements);
-
-    //std::cout << sumElements << std::endl;
+    }
+    end = std::chrono::steady_clock::now();
+    total = (end - start);
+    std::cout << "Standard vector adding every hundred element into one element test time: " << std::chrono::duration_cast<std::chrono::nanoseconds>(total).count() << " nanoseconds." << std::endl;
+    total = end - end;
 
     //testing if elements are in the same order
     sameElements = true;
 
-    for(unsigned long long i = 0; i < 10002; i++){
+    for(unsigned long long i = 0; i < arrLength; i++){
         if(intVector[i] != intStandardVector[i])
             sameElements = false;
     }
 
-    if (sameElements == true)
+    if (sameElements)
         boolOutput = "True";
     else
         boolOutput = "False";
 
-
-    std::cout << "Same elements(true/false): " << boolOutput << std::endl;
-    std::cout << "Your vector PushBack() test time: " << duration_cast<microseconds>(totalPushbackVec.time_since_epoch()).count() << " microseconds." << std::endl;
-    std::cout << "Your vector PushFront() test time: " << duration_cast<milliseconds>(totalPushfrontVec.time_since_epoch()).count() << " milliseconds." << std::endl;
-    std::cout << "Standard vector PushBack() test time: " << duration_cast<microseconds>(totalPushbackStdVec.time_since_epoch()).count() << " microseconds." << std::endl;
-    std::cout << "Standard vector PushFront() test time: " << duration_cast<milliseconds>(totalPushfrontStdVec.time_since_epoch()).count() << " milliseconds." << std::endl;
-    std::cout << "-----Integer vector test done. Press enter to continue.------" << std::endl;
-    std::cin.get();
+    std::cout << "Same elements(True/False):                                               " << boolOutput << std::endl;
+    std::cout << "----------------------------------Integer vector test done.--------------------------------" << std::endl;
+    std::cout << std::endl;
 
     //test list int
-    std::cout << "-------------------Integer list test begins.-----------------" << std::endl;
+    std::cout << "----------------------------------Integer list test begins.--------------------------------" << std::endl;
 
-    SteadyClockTimePoint totalPushbackList;
-    SteadyClockTimePoint totalPushfrontList;
-    SteadyClockTimePoint totalPushbackStdList;
-    SteadyClockTimePoint totalPushfrontStdList;
-
-    for(unsigned long long i = 0; i < 10000; i = i + 2)
+    for(unsigned int i = 0; i < arrLength/2; i++)
     {
-        start = steady_clock::now();
+        start = std::chrono::steady_clock::now();
         intList.PushBack(randomArray[i]);
-        end = steady_clock::now();
-        totalPushbackList += (end - start);
-        start = steady_clock::now();
-        intList.PushFront(randomArray[i+1]);
-        end = steady_clock::now();
-        totalPushfrontList += (end - start);
+        end = std::chrono::steady_clock::now();
+        total += (end - start);
     }
+    //std::cout << "Your list PushBack() test time:                                          " << std::chrono::duration_cast<std::chrono::microseconds>(total).count() << " microseconds." << std::endl;
+    //total = end - end;
 
-    for(unsigned long long i = 0; i < 10000; i = i + 2)
+    for(unsigned int i = arrLength/2; i < arrLength; i++)
     {
-        start = steady_clock::now();
-        intStandardList.push_back(randomArray[i]);
-        end = steady_clock::now();
-        totalPushbackStdList += (end - start);
-        start = steady_clock::now();
-        intStandardList.push_front(randomArray[i+1]);
-        end = steady_clock::now();
-        totalPushfrontStdList += (end - start);
+        start = std::chrono::steady_clock::now();
+        intList.PushFront(randomArray[i]);
+        end = std::chrono::steady_clock::now();
+        total += (end - start);
     }
+    std::cout << "Your list PushBack() and PushFront() test time:                          " << std::chrono::duration_cast<std::chrono::microseconds>(total).count() << " microseconds." << std::endl;
+    total = end - end;
+
+    for(unsigned int i = 0; i < arrLength/2; i++)
+    {
+        start = std::chrono::steady_clock::now();
+        intStandardList.push_back(randomArray[i]);
+        end = std::chrono::steady_clock::now();
+        total += (end - start);
+    }
+    //std::cout << "Standard list PushBack() test time:                                      " << std::chrono::duration_cast<std::chrono::microseconds>(total).count() << " microseconds." << std::endl;
+    //total = end - end;
+
+    for(unsigned int i = arrLength/2; i < arrLength; i++)
+    {
+        start = std::chrono::steady_clock::now();
+        intStandardList.push_front(randomArray[i]);
+        end = std::chrono::steady_clock::now();
+        total += (end - start);
+    }
+    std::cout << "Standard list PushBack() and PushFront() test time:                      " << std::chrono::duration_cast<std::chrono::microseconds>(total).count() << " microseconds." << std::endl;
+    total = end - end;
+
+    //summing elements into one element
+    sumElements = 0;
+    start = std::chrono::steady_clock::now();
+    for(unsigned int i = 0; i < arrLength; i++)
+    {
+        sumElements += intList[i];
+    }
+    end = std::chrono::steady_clock::now();
+    total = end - start;
+    std::cout << "Your list adding every element into one element test time:               " << std::chrono::duration_cast<std::chrono::microseconds>(total).count() << " microseconds." << std::endl;
+    total = end - end;
+
+    sumElements = 0;
+    start = std::chrono::steady_clock::now(); //taking time of the whole for-loop because std::list has no index operator
+    for(auto i: intStandardList)
+        sumElements += i;
+    end = std::chrono::steady_clock::now();
+    total = end - start;
+    std::cout << "Standard list adding every element into one element test time:           " << std::chrono::duration_cast<std::chrono::microseconds>(total).count() << " microseconds." << std::endl;
+    total = end - end;
+
+    //every hundred
+    sumElements = 0;
+    start = std::chrono::steady_clock::now();
+    for(unsigned int i = 0; i < arrLength; i = i+100)
+    {
+        sumElements += intList[i];
+    }
+    end = std::chrono::steady_clock::now();
+    total = end - start;
+    std::cout << "Your list adding every hundred element into one element test time:       " << std::chrono::duration_cast<std::chrono::microseconds>(total).count() << " microseconds." << std::endl;
+    total = end - end;
+
+    sumElements = 0;
+    unsigned int counter = 0;
+    start = std::chrono::steady_clock::now();
+    for(auto i: intStandardList){
+        if (counter == 100 || counter == 0)
+        {
+            sumElements += i;
+            counter = 0;
+        }
+        ++counter;
+    }
+    end = std::chrono::steady_clock::now();
+    total = end - start;
+    std::cout << "Standard list adding every hundred element into one element test time:   " << std::chrono::duration_cast<std::chrono::microseconds>(total).count() << " microseconds." << std::endl;
+    total = end - end;
 
     //testing if elements are in the same order
     sameElements = true;
-
     int index = 0;
     for(auto elem: intStandardList)
     {
@@ -188,50 +265,104 @@ int main()
     else
         boolOutput = "False";
 
-    std::cout << "Same elements(true/false): " << boolOutput << std::endl;
-    std::cout << "Your list PushBack() test time: " << duration_cast<microseconds>(totalPushbackList.time_since_epoch()).count() << " microseconds." << std::endl;
-    std::cout << "Your list PushFront() test time: " << duration_cast<microseconds>(totalPushfrontList.time_since_epoch()).count() << " microseconds." << std::endl;
-    std::cout << "Standard list PushBack() test time: " << duration_cast<microseconds>(totalPushbackStdList.time_since_epoch()).count() << " microseconds." << std::endl;
-    std::cout << "Standard list PushFront() test time: " << duration_cast<microseconds>(totalPushfrontStdList.time_since_epoch()).count() << " microseconds." << std::endl;
-    std::cout << "-------Integer list test done. Press enter to continue.------" << std::endl;
-    std::cin.get();
+    std::cout << "Same elements(true/false):                                               " << boolOutput << std::endl;
+    std::cout << "----------------------------------Integer list test done.----------------------------------" << std::endl;
+    std::cout << std::endl;
 
     //test vector string
-    std::cout << "-----------------String vector test begins.------------------" << std::endl;
+    std::cout << "--------------------------------String vector test begins.---------------------------------" << std::endl;
 
-    SteadyClockTimePoint totalStringPushbackVec;
-    SteadyClockTimePoint totalStringPushfrontVec;
-    SteadyClockTimePoint totalStringPushbackStdVec;
-    SteadyClockTimePoint totalStringPushfrontStdVec;
-
-    for(unsigned long long i = 0; i < 12196; i = i + 2)
+    for(unsigned long long i = 0; i < wordVector.size()/2; i++)
     {
-        start = steady_clock::now();
-        stringVector.PushBack(wordArray[i]);
-        end = steady_clock::now();
-        totalStringPushbackVec += (end - start);
-        start = steady_clock::now();
-        stringVector.PushFront(wordArray[i+1]);
-        end = steady_clock::now();
-        totalStringPushfrontVec += (end - start);
+        start = std::chrono::steady_clock::now();
+        stringVector.PushBack(wordVector[i]); //pushback
+        end = std::chrono::steady_clock::now();
+        total += end - start;
     }
+    //std::cout << "Your vector PushBack() test time:                                        " << std::chrono::duration_cast<std::chrono::microseconds>(total).count() << " microseconds." << std::endl;
+    //total = end - end;
 
-    for(unsigned long long i = 0; i < 12196; i = i + 2)
+    for(unsigned long long i = wordVector.size()/2; i < wordVector.size(); i++)
     {
-        start = steady_clock::now();
-        stringStandardVector.push_back(wordArray[i]);
-        end = steady_clock::now();
-        totalStringPushbackStdVec += (end - start);
-        start = steady_clock::now();
-        stringStandardVector.insert(stringStandardVector.begin(), wordArray[i+1]);
-        end = steady_clock::now();
-        totalStringPushfrontStdVec += (end - start);
+    start = std::chrono::steady_clock::now();
+    stringVector.PushFront(wordVector[i]); //pushfront for next element
+    end = std::chrono::steady_clock::now();
+    total += end - start;
     }
+    std::cout << "Your vector PushBack() and PushFront() test time:                        " << std::chrono::duration_cast<std::chrono::microseconds>(total).count() << " microseconds." << std::endl;
+    total = end - end;
+
+    for(unsigned long long i = 0; i < wordVector.size()/2; i++)
+    {
+        start = std::chrono::steady_clock::now();
+        stringStandardVector.push_back(wordVector[i]);
+        end = std::chrono::steady_clock::now();
+        total += end - start;
+        
+    }
+    //std::cout << "Standard vector PushBack() test time:                                    " << std::chrono::duration_cast<std::chrono::microseconds>(total).count() << " microseconds." << std::endl;
+    //total = end - end;
+
+    for(unsigned long long i = wordVector.size()/2; i < wordVector.size(); i++)
+    {
+        start = std::chrono::steady_clock::now();
+        stringStandardVector.insert(stringStandardVector.begin(), wordVector[i]);
+        end = std::chrono::steady_clock::now();
+        total += end - start;
+    }
+    std::cout << "Standard vector PushBack() and PushFront() test time:                    " << std::chrono::duration_cast<std::chrono::microseconds>(total).count() << " microseconds." << std::endl;
+    total = end - end;
+
+    //adding elements
+    std::string sumStringElements = "";
+    start = std::chrono::steady_clock::now();
+    for(unsigned int i = 0; i < stringVector.Size(); i++)
+    {
+        sumStringElements += stringVector[i];
+    }
+    end = std::chrono::steady_clock::now();
+    total = end - start;
+    std::cout << "Your vector adding every element into one element test time:             " << std::chrono::duration_cast<std::chrono::microseconds>(total).count() << " microseconds." << std::endl;
+    total = end - end;
+
+    sumStringElements = "";
+    start = std::chrono::steady_clock::now();
+    for(unsigned int i = 0; i < stringStandardVector.size(); i++)
+    {
+        sumStringElements += stringStandardVector[i]; 
+    }
+    end = std::chrono::steady_clock::now();
+    total = end - start;
+    std::cout << "Standard vector adding every element into one element test time:         " << std::chrono::duration_cast<std::chrono::microseconds>(total).count() << " microseconds." << std::endl;
+    total = end - end;
+
+    //every hundred
+    sumStringElements = "";
+    start = std::chrono::steady_clock::now();
+    for(unsigned int i = 0; i < stringVector.Size(); i = i+100)
+    {
+        sumStringElements += stringVector[i]; 
+    }
+    end = std::chrono::steady_clock::now();
+    total = end - start;
+    std::cout << "Your vector adding every hundred element into one element test time:     " << std::chrono::duration_cast<std::chrono::microseconds>(total).count() << " microseconds." << std::endl;
+    total = end - end;
+
+    sumStringElements = "";
+    start = std::chrono::steady_clock::now();
+    for(unsigned int i = 0; i < stringStandardVector.size(); i = i+100)
+    {
+        sumStringElements += stringStandardVector[i];
+    }
+    end = std::chrono::steady_clock::now();
+    total = end - start;
+    std::cout << "Standard vector adding every hundred element into one element test time: " << std::chrono::duration_cast<std::chrono::microseconds>(total).count() << " microseconds." << std::endl;
+    total = end - end;
 
     //testing if elements are in the same order
     sameElements = true;
 
-    for(unsigned long long i = 0; i < 12196; i++){
+    for(unsigned long long i = 0; i < wordVector.size(); i++){
         if(stringVector[i] != stringStandardVector[i])
             sameElements = false;
     }
@@ -241,46 +372,101 @@ int main()
     else
         boolOutput = "False";
 
-    std::cout << "Same elements(true/false): " << boolOutput << std::endl;
-    std::cout << "Your vector PushBack() test time: " << duration_cast<microseconds>(totalStringPushbackVec.time_since_epoch()).count() << " microseconds." << std::endl;
-    std::cout << "Your vector PushFront() test time: " << duration_cast<milliseconds>(totalStringPushfrontVec.time_since_epoch()).count() << " milliseconds." << std::endl;
-    std::cout << "Standard vector PushBack() test time: " << duration_cast<microseconds>(totalStringPushbackStdVec.time_since_epoch()).count() << " microseconds." << std::endl;
-    std::cout << "Standard vector PushFront() test time: " << duration_cast<milliseconds>(totalStringPushfrontStdVec.time_since_epoch()).count() << " milliseconds." << std::endl;
-    std::cout << "-----String vector test done. Press enter to continue.-------" << std::endl;
-    std::cin.get();
-
+    std::cout << "Same elements(true/false):                                               " << boolOutput << std::endl;
+    std::cout << "---------------------------------String vector test done.----------------------------------" << std::endl;
+    
+    std::cout << std::endl;
     //test list string
-    std::cout << "------------------String list test begins.-------------------" << std::endl;
+    std::cout << "---------------------------------String list test begins.----------------------------------" << std::endl;
 
-    SteadyClockTimePoint totalStringPushbackList;
-    SteadyClockTimePoint totalStringPushfrontList;
-    SteadyClockTimePoint totalStringPushbackStdList;
-    SteadyClockTimePoint totalStringPushfrontStdList;
-
-    for(unsigned long long i = 0; i < 12196; i = i + 2)
+    for(unsigned long long i = 0; i < wordVector.size()/2; i++)
     {
-        start = steady_clock::now();
-        stringList.PushBack(wordArray[i]);
-        end = steady_clock::now();
-        totalStringPushbackList += (end - start);
-        start = steady_clock::now();
-        stringList.PushFront(wordArray[i+1]);
-        end = steady_clock::now();
-        totalStringPushfrontList += (end - start);
-        
+        start = std::chrono::steady_clock::now();
+        stringList.PushBack(wordVector[i]);
+        end = std::chrono::steady_clock::now();
+        total += end - start;
     }
+    //std::cout << "Your list PushBack() test time:                                          " << std::chrono::duration_cast<std::chrono::microseconds>(total).count() << " microseconds." << std::endl;
+    //total = end - end;
 
-    for(unsigned long long i = 0; i < 12196; i = i + 2)
+    for(unsigned long long i = wordVector.size()/2; i < wordVector.size(); i++)
     {
-        start = steady_clock::now();
-        stringStandardList.push_back(wordArray[i]);
-        end = steady_clock::now();
-        totalStringPushbackStdList += (end - start);
-        start = steady_clock::now();
-        stringStandardList.push_front(wordArray[i+1]);
-        end = steady_clock::now();
-        totalStringPushfrontStdList += (end - start);
+        start = std::chrono::steady_clock::now();
+        stringList.PushFront(wordVector[i]);
+        end = std::chrono::steady_clock::now();
+        total += end - start;
     }
+    std::cout << "Your list PushBack() and PushFront() test time:                          " << std::chrono::duration_cast<std::chrono::microseconds>(total).count() << " microseconds." << std::endl;
+    total = end - end;
+
+    for(unsigned long long i = 0; i < wordVector.size()/2; i++)
+    {
+        start = std::chrono::steady_clock::now();
+        stringStandardList.push_back(wordVector[i]);
+        end = std::chrono::steady_clock::now();
+        total += end - start;
+    }
+    //std::cout << "Standard list PushBack() test time:                                      " << std::chrono::duration_cast<std::chrono::microseconds>(total).count() << " microseconds." << std::endl;
+    //total = end - end;
+
+    for(unsigned long long i = wordVector.size()/2; i < wordVector.size(); i++)
+    {
+        start = std::chrono::steady_clock::now();
+        stringStandardList.push_front(wordVector[i]);
+        end = std::chrono::steady_clock::now();
+        total += end - start;
+    }
+    std::cout << "Standard list PushBack() and PushFront() test time:                      " << std::chrono::duration_cast<std::chrono::microseconds>(total).count() << " microseconds." << std::endl;
+    total = end - end;
+
+    //adding every elem
+    sumStringElements = "";
+    start = std::chrono::steady_clock::now();
+    for(unsigned int i = 0; i < stringList.Size(); i++)
+    {   
+        sumStringElements += stringList[i];  
+    }
+    end = std::chrono::steady_clock::now();
+    total = end - start;
+    std::cout << "Your list adding every element into one element test time:               " << std::chrono::duration_cast<std::chrono::microseconds>(total).count() << " microseconds." << std::endl;
+    total = end - end;
+
+    sumStringElements = "";
+    start = std::chrono::steady_clock::now();
+    for(auto i: stringStandardList)
+        sumStringElements += i;
+    end = std::chrono::steady_clock::now();
+    total = end - start;
+    std::cout << "Standard list adding every element into one element test time:           " << std::chrono::duration_cast<std::chrono::microseconds>(total).count() << " microseconds." << std::endl;
+    total = end - end;
+
+    //every hundred
+    sumStringElements = "";
+    start = std::chrono::steady_clock::now();
+    for(unsigned int i = 0; i < stringList.Size(); i = i+100)
+    {
+        sumStringElements += stringList[i];
+    }
+    end = std::chrono::steady_clock::now();
+    total = end - start;
+    std::cout << "Your list adding every hundred element into one element test time:       " << std::chrono::duration_cast<std::chrono::microseconds>(total).count() << " microseconds." << std::endl;
+    total = end - end;
+
+    sumStringElements = "";
+    counter = 0;
+    start = std::chrono::steady_clock::now();
+    for(auto i: stringStandardList){
+        if (counter == 100 || counter == 0)
+        {
+            sumStringElements += i;
+            counter = 0;
+        }
+        ++counter;
+    }
+    end = std::chrono::steady_clock::now();
+    total = end - start;
+    std::cout << "Standard list adding every hundred element into one element test time:   " << std::chrono::duration_cast<std::chrono::microseconds>(total).count() << " microseconds." << std::endl;
+    total = end - end;
 
     //testing if elements are in the same order
     sameElements = true;
@@ -298,13 +484,9 @@ int main()
     else
         boolOutput = "False";
 
-    std::cout << "Same elements(true/false): " << boolOutput << std::endl;
-    std::cout << "Your list PushBack() test time: " << duration_cast<microseconds>(totalStringPushbackList.time_since_epoch()).count() << " microseconds." << std::endl;
-    std::cout << "Your list PushFront() test time: " << duration_cast<microseconds>(totalStringPushfrontList.time_since_epoch()).count() << " microseconds." << std::endl;
-    std::cout << "Standard list PushBack() test time: " << duration_cast<microseconds>(totalStringPushbackStdList.time_since_epoch()).count() << " microseconds." << std::endl;
-    std::cout << "Standard list PushFront() test time: " << duration_cast<microseconds>(totalStringPushfrontStdList.time_since_epoch()).count() << " microseconds." << std::endl;
-    std::cout << "------String list test done. Press enter to continue.--------" << std::endl;
-    std::cin.get();
+    std::cout << "Same elements(true/false):                                               " << boolOutput << std::endl;
+    std::cout << "---------------------String list test done. Press enter to continue.-----------------------" << std::endl;
 
+    std::cin.get();
     return 0;
 }
